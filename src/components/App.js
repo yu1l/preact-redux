@@ -2,7 +2,8 @@ import Child from './Child'
 import { Component } from 'preact'
 import { bindActionCreators } from 'redux'
 import { connect } from 'preact-redux'
-import { updateUser } from '../actions/user-action'
+import { createSelector } from 'reselect'
+import { updateUser, apiRequest, requestMade } from '../actions/user-action'
 
 const style = {
     textAlign: "center",
@@ -32,6 +33,10 @@ class App extends Component {
 
     componentDidMount() {
         console.log("App - componentDidMount()")
+        this.props.onApiRequestMade()
+        setTimeout(() => {
+            this.props.onApiRequest()
+        }, 1500)
     }
 
     componentWillMount() {
@@ -67,32 +72,38 @@ class App extends Component {
             <div>
                 <h1 style={style}>Hello, {this.state.foo}</h1>
                 <Child updateParent={this.handle} uuid={this.state.uuid} />
+                <hr />
                 <input onChange={this.onUpdateUser} placeholder="Enter Username" />
-                <div onClick={this.onUpdateUser}>UPDATE</div>
+                <br />
                 {this.props.user}
             </div>
 		);
 	}
 }
 
-const mapStateToProps = (state, props) => {
-    return {
-        products: state.products,
-        user: state.user,
-        userPropsPlus: `${state.user} - in ${props.mainTitle}`
-    }
+const productsSelector = createSelector(
+    state => state.products,
+    products => products
+)
+
+const userSelector = createSelector(
+    state => state.user,
+    user => user
+)
+
+const mapStateToProps = createSelector(
+    productsSelector,
+    userSelector,
+    (products, user) => ({
+        products,
+        user
+    })
+);
+
+const mapActionsToProps = {
+    onUpdateUser: updateUser,
+    onApiRequest: apiRequest,
+    onApiRequestMade: requestMade
 };
 
-const mapActionsToProps = (dispatch, props) => {
-    console.log(props)
-    return bindActionCreators({
-        onUpdateUser: updateUser
-    }, dispatch)
-};
-const mergeProps = (propsFromState, propsFromDispatch, ownProps) => {
-    console.log(propsFromState, propsFromDispatch, ownProps)
-    return {
-
-    }
-}
-export default connect(mapStateToProps, mapActionsToProps, mergeProps)(App);
+export default connect(mapStateToProps, mapActionsToProps)(App);
